@@ -46,8 +46,24 @@ public class MyMap <K, V> {
 	public void put(K key, V value) {
 		expandIfNecessary();
 		
-		// TODO: Store the key.
-	}
+       int compressionLoc = key.hashCode() % this.buckets.length;
+
+        boolean keyExists = false;
+
+        for (int i = 0; i < buckets[compressionLoc].size(); i++) {
+            if (buckets[compressionLoc].get(i).getKey() == key)
+            {
+                buckets[compressionLoc].get(i).setValue(value);
+                keyExists = true;
+            }
+        }
+
+        if (!keyExists)
+        {
+            buckets[compressionLoc].add(new MyEntry<K, V>(key, value));
+            numEntries++;
+        }
+    }
 	
 	/**
 	 * Returns the value associated with the specified key, or null if it
@@ -58,7 +74,17 @@ public class MyMap <K, V> {
 	 */
 	public V get(K key) {
 		// TODO: retrieve the key.
-		return null;
+        int compressionLoc = key.hashCode() % buckets.length;
+        List<MyEntry<K, V>> currentBucket = buckets[compressionLoc];
+        V value = null;
+
+        for (int i = 0; i < currentBucket.size(); i++)
+        {
+            if (currentBucket.get(i).getKey() == key)
+                value = currentBucket.get(i).getValue();
+        }
+
+        return value;
 	}
 	
 	/**
@@ -66,6 +92,21 @@ public class MyMap <K, V> {
 	 */
 	private void expandIfNecessary() {
 		// TODO: expand if necessary
+        if ((double) size() / buckets.length > loadFactor)
+        {
+            int newSize = buckets.length * 2;
+            List<MyEntry<K, V>>[] temp = buckets;
+            buckets = newArrayOfEntries(newSize);
+            numEntries = 0;
+
+            for (List<MyEntry<K, V>> bucket : temp)
+            {
+                for (MyEntry<K, V> entry : bucket)
+                {
+                    this.put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
 	}
 	
 	/**
